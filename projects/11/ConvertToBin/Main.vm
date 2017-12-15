@@ -1,0 +1,111 @@
+// class Main
+// function void Main.main
+function Main.main 1
+push constant 8001
+push constant 16
+push constant 1
+neg
+call Main.fillMemory 3
+pop temp 0 // void
+push constant 8000
+call Memory.peek 1
+pop local 0
+push local 0
+call Main.convert 1
+pop temp 0 // void
+push constant 0
+return
+// function void Main.convert
+function Main.convert 3
+push constant 0 // true
+not
+pop local 2
+label WHILE.1
+push local 2
+not
+if-goto WHILE.2
+push local 1
+push constant 1
+add
+pop local 1
+push local 0
+call Main.nextMask 1
+pop local 0
+push local 1
+push constant 16
+gt
+not
+not
+if-goto IF.1
+push argument 0
+push local 0
+and
+push constant 0
+eq
+not
+not
+if-goto IF.1
+push constant 8000
+push local 1
+add
+push constant 1
+call Memory.poke 2
+pop temp 0 // void
+goto IF.2
+label IF.1
+push constant 8000
+push local 1
+add
+push constant 0
+call Memory.poke 2
+pop temp 0 // void
+label IF.2
+goto IF.3
+label IF.2
+push constant 0 // false
+pop local 2
+label IF.3
+goto WHILE.1
+label WHILE.2
+push constant 0
+return
+// function int Main.nextMask
+function Main.nextMask 0
+push argument 0
+push constant 0
+eq
+not
+if-goto IF.3
+push constant 1
+return
+goto IF.4
+label IF.3
+push argument 0
+push constant 2
+call Math.multiply 2
+return
+label IF.4
+// function void Main.fillMemory
+function Main.fillMemory 0
+label WHILE.3
+push argument 1
+push constant 0
+gt
+not
+if-goto WHILE.4
+push argument 0
+push argument 2
+call Memory.poke 2
+pop temp 0 // void
+push argument 1
+push constant 1
+sub
+pop argument 1
+push argument 0
+push constant 1
+add
+pop argument 0
+goto WHILE.3
+label WHILE.4
+push constant 0
+return

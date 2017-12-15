@@ -1,0 +1,15 @@
+/**
+ * special 16-bit multiplexor
+ * for i = 0..15 out[i] = a[i] if zero == 0 
+ *                        0    if zero == 1
+ */
+
+CHIP Zero16 {
+  IN a[16], zero;
+  OUT out[16];
+
+  PARTS:
+  // Put your code here:
+  Mux16(a=a, b=false, sel=zero, out=out);
+
+}

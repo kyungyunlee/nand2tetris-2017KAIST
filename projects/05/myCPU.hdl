@@ -1,0 +1,59 @@
+
+CHIP CPU {
+    IN inM[16],
+       instruction[16],
+       reset;
+    OUT outM[16],
+        writeM,
+        addressM[15],
+        pc[15];
+
+
+    PARTS:
+    // i xx a cccccc ddd jjj
+    // opcode
+    Not(in=instruction[15], out= ainstr);
+    Not(in=ainstr, out=cinstr);
+  
+
+    // load which register
+    And(a=instruction[4], b=instruction[15], out=loadd);
+    And(a=instruction[5], b=instruction[15], out=loada);
+//    And(a=instruction[6], b=instruction[15], out=loadm);
+
+    DRegister(in=aluout,load=loadd, out=DReg);
+
+    // if a, load instruction to A register
+    Mux16(a=aluout, b=instruction, sel=loada, out=inputToA);
+    Or(a=loada, b=ainstr, out = loadA);
+    ARegister(in=inputToA, load=loadA, out=AReg);
+
+    // c-instr, A input or M input
+    Mux16(a=AReg, b=inM, sel=instruction[12], out=yin);
+
+    
+
+    ALU(x=DReg, y=yin, zx=instruction[11], nx=instruction[10], zy=instruction[9], ny=instruction[8], f=instruction[7], no=instruction[6], out=aluout, out=outM, zr=zr, ng=ng);
+
+    And(a=cinstr, b=instruction[3], out=writeM);
+    Or16(a=Areg, b=false, out[0..14]=addressM);
+
+  //calculate jump instr
+    
+    Not(in=ng, out=ps);
+    And(a=instruction[0], b=ps, out=jgt);
+
+    And(a=instruction[1], b= zr, out=jeq);
+    And(a=instruction[2], b=ng, out=jlt);
+
+    Or(a=jeq, b=jlt, out=jle);
+    Or(a=jeq, b=jgt, out=jge);
+    
+    Or(a=jgt, b=jle, out=jump1);
+
+    And(a=instruction[15], b=jump1, out=jumpPC);
+    Not(in=jumpPC, out=incPC);
+    PC(in=AReg, load=jumpPC, inc=incPC, reset=reset, out[0..14]=pc); 
+}
+
+

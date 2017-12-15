@@ -1,0 +1,135 @@
+//
+// Draw two nice patterns
+//
+// Pattern.lines(x, y, d)
+// draws lines from the point (x,y) to all points
+// (511,0), (511,d), (511, 2d), (511, 3d) ...
+//
+// Pattern.disk(x, y, r, xstep)
+// fills a disk of radius r, centered at (x,y) with a zig-zag
+// pattern where x increases by xstep in every step
+// 
+// You can use all functions of the Jack standard library
+// (see file "Jack OS API" in projects/09)
+// 
+// in particular use Math.multiply, Math.sqrt, and
+// Screen.drawLine to draw the lines
+//
+// Pattern.lines(x, y, d)
+function Pattern.lines 3
+// not implemented yet
+  push constant 1 
+  call Screen.setColor 1
+  push constant 256
+  push argument 2 // d
+  call Math.divide 2
+  pop local 0 // numlines = 256 /d 
+  push constant 0
+  pop local 1 // j
+label loop // while j < numlines
+  push local 0 // numlines
+  push local 1 // j
+  lt 
+  if-goto end
+  push local 1 //j
+  push argument 2 //d
+  call Math.multiply 2
+  pop local 2 // ypoint = j * d
+  push argument 0 // x
+  push argument 1 // y
+  push constant 511
+  push local 2 // ypoing
+  call Screen.drawLine 4
+  push constant 1
+  push local 1 // j
+  add
+  pop local 1 // j = j + 1
+  goto loop
+label end
+  return
+
+// Pattern.disk(x, y, r, xstep)
+// local variables: curx, cury, prevx, prevy, up
+function Pattern.disk 8
+// not implemented yet
+
+// numpoints = 2 * r / xstep - 1
+// j = 0
+// sign = 1 
+// yprev = y
+// xprev = x - r
+// while j < numpoints :
+//  xpoint = xprev + xsteps
+//  ypoint = Math.sqrt (r * r - xpoint * xpoint)
+//  ypoint = ypoint * sign
+//  Screen.drawLine()
+//  yprev= ypoint
+//  sign = sign * -1
+//  j = j + 1
+// return
+
+push constant 1
+call Screen.setColor 1
+push constant 1
+neg
+pop local 0 // sign = -1
+push argument 0 // x
+push argument 2 // r
+add
+pop local 1 // xend = x + r
+push local 1 // xend
+push argument 3 // xstep
+sub
+pop local 1 // xend = x + r - xstep
+push argument 0 // x
+push argument 2 // r
+sub
+pop local 2 // xprev = x - r
+push argument 1 // y
+pop local 3 // yprev = y
+label loop1
+  push local 1 // xend
+  push local 2 // xprev 
+  lt
+  if-goto end1
+  push local 2 // xprev
+  push argument 3 // xstep
+  add
+  pop local 4 // xcurr = xprev + xstep
+  push argument 2 // r
+  push argument 2 // r
+  call Math.multiply 2 // r^2
+  push local 4 // xcurr
+  push argument 0 // x
+  sub
+  pop local 5 // temp = xcurr-x
+  push local 5 // temp
+  push local 5 // temp
+  call Math.multiply 2 // temp^2
+  sub // r^2 - temp^2
+  call Math.sqrt 1
+  push local 0 // sign
+  call Math.multiply 2
+  pop local 5 // temp = (-) sqrt(r^2 - temp^2)
+  push local 5 // temp
+  push argument 1 // y
+  add
+  pop local 6 // ycurr = 
+  push local 2 // xprev
+  push local 3 // yprev
+  push local 4 // xcurr
+  push local 6 // ycurr
+  call Screen.drawLine 4
+  push local 4 // xcurr
+  pop local 2 // xprev = xcurr
+  push local 6 // ycurr
+  pop local 3 // yprev = ycurr
+  push local 0 // sign
+  neg 
+  pop local 0 // sign = -sign
+  goto loop1
+
+
+label end1
+  return
+

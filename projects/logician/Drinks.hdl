@@ -1,0 +1,18 @@
+CHIP Drinks {
+    IN wine, water, juice;
+    OUT cond1, cond2, cond3, okay;
+    PARTS:
+
+    Xor(a=water, b=wine, out=cond1, out=c1);
+
+    Nand(a=wine, b=water, out=x);
+    Not(in=juice, out=njuice);
+    Or(a=njuice, b=x, out=cond2, out= c2);
+
+    And(a=njuice, b=water, out=y);
+    Not(in=wine, out=nwine);
+    Or(a=y, b=nwine, out=cond3, out=c3);
+
+    And(a=c1, b=c2, out=temp);
+    And(a=temp, b=c3, out=okay);
+}

@@ -1,0 +1,21 @@
+/** Project 1-a **/
+
+CHIP Food {
+    IN potatoes, noodles, bread;
+    OUT cond1, cond2, cond3, okay;
+
+    PARTS:
+    Xor(a=potatoes, b=noodles, out=cond1, out= c1);
+
+    Nand(a=potatoes, b=bread, out=cond2, out=c2);
+
+    Not(in=bread, out=nbread);
+    Not(in=noodles, out=nnoodles);
+    And(a=nbread, b=potatoes, out=temp);
+    Or(a=temp, b=nnoodles, out=cond3, out=c3);
+
+    And(a=c1, b=c2, out=x);
+    And(a=x, b=c3, out=okay);
+
+
+}

@@ -1,0 +1,279 @@
+// -*- java -*-
+
+class Board {
+  field Array a;
+  field Array b;
+ 
+  constructor Board new() {
+    // todo
+    var int i;
+    let a = Array.new(16);
+    let b = Array.new(16);
+    let i = 0;
+    while (i < 16) {
+      let a[i] = 0;
+      let b[i] = 0;
+      let i = i + 1;
+    }
+    return this;
+  }
+
+  // draw the board on the screen
+  method void draw() {
+    var int i;
+    let i = 0;
+    do Screen.clearScreen();
+    while (i < 16) {
+      do drawField(i);
+      let i = i + 1;
+    }
+    return;
+  }
+
+  method void drawField(int i) {
+    var int x, y;
+    let y = i / 4;
+    let x = i - (4*y);
+    // if a[i] = 0, set the thickness to 1
+    if (a[i] = 0) {
+    // the Black outer rectangle 
+      do Screen.setColor(true);
+      do Screen.drawRectangle(x*64 + 128, y*64, x*64 + 60 + 128, y * 64 + 60);
+    // the White inner rectangle
+      do Screen.setColor(false);
+      do Screen.drawRectangle(x*64 + 1 + 128, y*64 + 1, x*64 + 59 + 128, y * 64 + 59);
+    } 
+    else {
+    // the Black outer rectangle 
+    do Screen.setColor(true);
+    do Screen.drawRectangle(x*64 + 128, y*64, x*64 + 60 + 128, y * 64 + 60);
+    // the White inner rectangle
+    do Screen.setColor(false);
+    do Screen.drawRectangle(x*64 + 3 + 128, y*64 + 3,
+			    x*64 + 57 + 128, y * 64 + 57);
+    do Output.moveCursor(y * 6 + 2, 8 * x + 20);
+    do Output.printInt(a[i]);
+    }
+    return;
+  }
+
+  // insert 2 (with probability 90%) or 4 (with probability 10%)
+  // at a random location
+  // returns true if insertion succeeded
+  method boolean insert() {
+    // todo
+    var int randcell;
+    var int randval;
+    var int i;
+    var int empty_found;
+    let i = 0;
+    let empty_found = 0;
+    // first check if there is empty cells...
+    while (i < 16) {
+      if (a[i] = 0) {
+        let empty_found = 1;
+      }
+      let i = i + 1;
+    }
+    if (empty_found = 0 ) {
+      return false;
+    }
+
+    let randcell = LCGRandom.randRange(0,15);
+    let randval = LCGRandom.randRange(1,10);
+    
+    if (a[randcell] = 0) {
+    if (randval < 10) {
+      let a[randcell] = 2;
+    } else {
+      let a[randcell] = 4;
+    }
+    }
+    return true;
+  }
+
+  // perform a left push, return number of points gained
+  method int pushLeft() {
+    // todo
+    var int i;
+    var int j;
+    var int k;
+    var int leftone;
+    var int leftoneindex;
+    var int points;
+    let i = 0;
+    
+    while ( i < 16) {
+
+      let leftone = -1;
+      let leftoneindex = 0;
+      let j = i;
+      while (j < (i + 4)) {
+        if (a[j] > 0 ) { // only do something if current a[j] is not 0
+            if (leftone = -1) { // if box on the left is irrelevant
+              let leftone = a[j];
+              if (~((i+leftoneindex) = j)) {
+                let a[i + leftoneindex] = a[j];
+                let a[j] = 0;
+              }
+              
+            }
+            else {
+              if (leftone = a[j]) {
+                let a[i+leftoneindex] = a[j] * 2;
+                let leftone = -1;
+                let leftoneindex = leftoneindex + 1;
+                let points = points + (a[j] * 2);
+                if (~((i+leftoneindex-1) = j)) {
+                  let a[j] = 0;
+                }
+              } 
+              else { // if the box on the left is not same;
+                //let a[i+ leftoneindex] = leftone;
+                let leftone = a[j];
+                let leftoneindex = leftoneindex + 1;
+                if (~((i+leftoneindex) = j)) {
+                  let a[i+leftoneindex] = a[j];
+                  let a[j] = 0;
+                }
+
+              }
+            }
+        }
+        let j = j+1;
+      }
+    let i = i + 4;
+    }
+
+    return points;
+  }
+  
+
+
+  method int pushUp() {
+    // todo
+    var int i;
+    var int points;
+    var Array saved;
+    let saved = Array.new(16);
+    let i = 0;
+    do transpose();
+    while (i<16) {
+      let saved[i] = a[i];
+      let a[i] = b[i];
+      let b[i] = saved[i];
+      let i = i + 1;
+    }
+
+    let points = pushLeft();
+    
+    let i =0;
+    do transpose();
+    while (i<16){
+      let saved[i] = a[i];
+      let a[i] = b[i];
+      let b[i] = saved[i];
+      let i = i + 1;
+    }
+
+    return points;
+  }
+
+  method void transpose() {
+    var int i;
+    var int j;
+    var int k;
+    let i = 0;
+    let j = 0;
+    let k = 0;
+    while (i < 4) {
+      let j = i;
+      while (j < 16) {
+      let b[k] = a[j];
+      let j = j +4;
+      let k = k+1;
+      }
+      let i = i +1;
+    }
+    return ;
+  }
+
+  method void invert() {
+    var int i;
+    var int j;
+    var int k;
+    let i = 0;
+    let j = 0;
+    let k = 0;
+    while (i<16) {
+      let j = i;
+      let k = 0;
+      while (j< (i+4)) {
+        let b[j] = a[i+3-k];
+        let j = j + 1;
+        let k = k + 1;
+      }
+      let i = i + 4;
+    }
+    return;
+  }
+
+  method int pushDown() {
+    // todo
+    var int i;
+    var int points;
+    var Array saved;
+    let saved = Array.new(16);
+    let i = 0;
+    do transpose();
+    while (i<16) {
+      let saved[i] = a[i];
+      let a[i] = b[i];
+      let b[i] = saved[i];
+      let i = i + 1;
+    }
+
+    let points = pushRight();
+    
+    let i =0;
+    do transpose();
+    while (i<16){
+      let saved[i] = a[i];
+      let a[i] = b[i];
+      let b[i] = saved[i];
+      let i = i + 1;
+    }
+
+    return points;
+  }
+
+  method int pushRight() {
+    // todo
+
+    var int i;
+    var int points;
+    var Array saved;
+    let saved = Array.new(16);
+    let i = 0;
+    do invert();
+    while (i<16) {
+      let saved[i] = a[i];
+      let a[i] = b[i];
+      let b[i] = saved[i];
+      let i = i + 1;
+    }
+
+    let points = pushLeft();
+    
+    let i =0;
+    do invert();
+    while (i<16){
+      let saved[i] = a[i];
+      let a[i] = b[i];
+      let b[i] = saved[i];
+      let i = i + 1;
+    }
+
+    return points;
+  }
+}

@@ -1,0 +1,15 @@
+/**
+ * 16-bit negator
+ * for i = 0..15 out[i] = a[i] if negate == 0 
+ *                        not a[i] if negate == 1
+ */
+
+CHIP Neg16 {
+  IN a[16], negate;
+  OUT out[16];
+
+  PARTS:
+  // Put you code here:
+  Not16(in=a, out=na);
+  Mux16(a=a, b=na, sel=negate, out=out);
+}

@@ -1,0 +1,45 @@
+//
+// Hardware multiplier
+//
+
+/**
+ * Multiplies two 8-bit values 0 <= a, b <= 255.
+ * The result, interpreted as an unsigned number, is a * b.
+ */
+
+CHIP Mult16 {
+    IN a[8], b[8];
+    OUT out[16];
+
+    PARTS:
+    // Put you code here:
+    // for each bit in b, if b == 1, get a , else it is all 0
+    Mux16(a=false, b[0..7]=a, sel=b[0], out=temp0);
+    Add16(a[0..7]=a, b[0..7]=a, out=shifta1);
+    Mux16(a=false, b=shifta1, sel=b[1], out=temp1);
+    Add16(a=shifta1, b=shifta1, out=shifta2);
+    Mux16(a=false, b=shifta2, sel=b[2], out=temp2);
+    Add16(a=shifta2, b=shifta2, out=shifta3);
+    Mux16(a=false, b=shifta3, sel=b[3], out=temp3);
+    Add16(a=shifta3, b=shifta3, out=shifta4);
+    Mux16(a=false, b=shifta4, sel=b[4], out=temp4);
+    Add16(a=shifta4, b=shifta4, out=shifta5);
+    Mux16(a=false, b=shifta5, sel=b[5], out=temp5);
+    Add16(a=shifta5, b=shifta5, out=shifta6);
+    Mux16(a=false, b=shifta6, sel=b[6], out=temp6);
+    Add16(a=shifta6, b=shifta6, out=shifta7);
+    Mux16(a=false, b=shifta7, sel=b[7], out=temp7);
+    Add16(a=shifta7, b=shifta7, out=shifta8);
+
+    Add16(a=temp0, b=temp1, out=add1);
+    Add16(a=add1, b=temp2, out=add2);
+    Add16(a=add2, b=temp3, out=add3);
+    Add16(a=add3, b=temp4, out=add4);
+    Add16(a=add4, b=temp5, out=add5);
+    Add16(a=add5, b=temp6, out=add6);
+    Add16(a=add6, b=temp7, out=out);
+
+
+
+
+}
