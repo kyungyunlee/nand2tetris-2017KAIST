@@ -1,4 +1,4 @@
-import sys
+import os, sys
 
 # reads the file
 class VMParser:
@@ -9,6 +9,9 @@ class VMParser:
         self.file = None
         self.file = open(self.filename,'r')
         self.file_init()
+    
+    def close(self):
+        self.file.close()
 
     # find out what type of instruction it is
     def get_command_type(self):
@@ -31,31 +34,28 @@ class VMParser:
               'return' : 'VM_RETURN',
                 'call' : 'VM_CALL'
                 }
+        #print('cmd : ' + self.curr_instr.split()[0])
         cmd = cmd_types[self.curr_instr.split()[0]]
-        print (cmd)
         return cmd
 
     def file_init(self):
-        line = self.file.readline().strip()
-        while line[:2] == '//':
-            line = self.file.readline().strip()
-        self.curr_instr = line
-        self.next_instr = self.get_next_instr()
+        line = self.file.readline()
+        while line[:2] == '//' or line == '\n':
+            line = self.file.readline()
+        self.curr_instr = ''
+        self.next_instr = line
    
     # read next line 
     def get_next_instr(self):
-        line = self.file.readline().strip()
-        while line[:2] == '//':
-            line = self.file.readline().strip()
+        line = self.file.readline()
+        while line[:2] == '//' or line == '\n':
+            line = self.file.readline()
         return line
 
     # update current and next instruction 
     def next(self):
         self.curr_instr = self.next_instr
         self.next_instr = self.get_next_instr()
-        print ('next\n')
-        print ('curr instr : ' + self.curr_instr)
-        print ('next instr : ' + self.next_instr)
 
     # is end of file. no more instruction
     def is_end(self):
@@ -68,10 +68,24 @@ class VMParser:
 # writes to file
 class HackGenerator:
     def __init__(self, filename):
-        self.filename = filename
+        self.filename = None
         self.file = open(filename, 'w')
         self.cond_jump_count = 0
         self.call_count = 0
+
+    def update_filename(self, newfilename):
+        self.filename = newfilename.split(".vm")[0].strip('/').split('/')[-1]
+    
+
+    def sys_init(self):
+        self.file.write('@256\n')
+        self.file.write('D=A\n')
+        self.file.write('@SP\n')
+        self.file.write('M=D\n')
+        self.convert_call('Sys.init', 0)
+
+    def close(self):
+        self.file.close()
 
     # put value of D into stack
     def stack_push (self):
@@ -127,7 +141,6 @@ class HackGenerator:
         
         self.file.write('@SP\n')
         self.file.write('M=M+1\n')
-    
     # eq, lt, gt etc
     def convert_comparison(self, op):
         self.stack_pop() # D = value at stack
@@ -163,15 +176,15 @@ class HackGenerator:
         self.cond_jump_count += 1
 
     def convert_label (self, label) :
-        self.file.write('(' + label + ')\n')
+        self.file.write('(' + self.filename + '_' + label + ')\n')
         
     def convert_goto(self, label):
-        self.file.write('@' + label + '\n')
+        self.file.write('@' + self.filename + '_' + label + '\n')
         self.file.write('0;JMP\n')
 
     def convert_ifgoto(self, label):
         self.stack_pop()
-        self.file.write('@' + label + '\n')
+        self.file.write('@' + self.filename + '_' + label + '\n')
         self.file.write('D;JNE\n')
 
     def convert_return(self):
@@ -285,7 +298,7 @@ class HackGenerator:
             elif arg1 == 'VM_POP':
                 self.file.write('D=A\n')
         elif var_type == 'static':
-            self.file.write('@R' + str(int(var) + 16) + '\n')
+            self.file.write('@' + self.filename+'_' + str(int(var) + 16) + '\n')
             if arg1 == 'VM_POP':
                 self.file.write('D=A\n')
             elif arg1 == 'VM_PUSH':
@@ -296,33 +309,56 @@ class HackGenerator:
 
 if __name__ == '__main__':
     filename = sys.argv[-1]
-    print (filename)
-    vmparser = VMParser(filename)
-    asmfilename = filename.split('.')[0]
-    hackgenerator = HackGenerator(asmfilename + '.asm')
-    while not vmparser.is_end():
-        vmparser.next()
-        cmd = vmparser.get_command_type()
-        inst = vmparser.curr_instr.split()
-        if cmd == 'VM_PUSH' or cmd == 'VM_POP':
-            hackgenerator.convert_stack_instr(cmd, inst[1], inst[2])
-        elif cmd in  ['VM_ARITH', 'VM_NEG', 'VM_NOT']:
-            hackgenerator.convert_arithmetic_op(inst[0])
-        elif cmd == 'VM_COMP':
-            hackgenerator.convert_comparison(inst[0])
-        elif cmd == 'VM_LABEL':
-            hackgenerator.convert_label (inst[1])
-        elif cmd == 'VM_GOTO' :
-            hackgenerator.convert_goto(inst[1])
-        elif cmd == 'VM_IF_GOTO' :
-            hackgenerator.convert_ifgoto(inst[1])
-        elif cmd == 'VM_FUNCTION':
-            hackgenerator.convert_function(inst[1], inst[2])
-        elif cmd == 'VM_RETURN' :
-            hackgenerator.convert_return()
-        elif cmd == 'VM_CALL':
-            hackgenerator.convert_call(inst[1], inst[2])
-        #print ('loop: ' + vmparser.curr_instr)
+    filelist = []
+    if '.vm' in filename:
+        filelist.append(filename)
+        asmfilename = filename.split('.vm')[0] + '.asm'
+    else :
+        if filename[-1] != '/':
+            filename = filename + '/'
+        for f in os.listdir(filename):
+            if '.vm' in f:
+                filelist.append(filename + f)
+        path = (filename.split('/'))
+        if path[-1] == '':
+            name = path[-2]
+        else :
+            name = '/' + path[-1]
+        asmfilename = filename + name + '.asm'
+    hackgenerator = HackGenerator(asmfilename)
+
+    # for directories 
+    if '.vm' not in filename:
+        hackgenerator.sys_init()
+    
+    for i in filelist:
+        vmparser = VMParser(i)
+        hackgenerator.update_filename(i)
+        while not vmparser.is_end():
+            vmparser.next()
+            cmd = vmparser.get_command_type()
+            inst = vmparser.curr_instr.split()
+            if cmd == 'VM_PUSH' or cmd == 'VM_POP':
+                hackgenerator.convert_stack_instr(cmd, inst[1], inst[2])
+            elif cmd in  ['VM_ARITH', 'VM_NEG', 'VM_NOT']:
+                hackgenerator.convert_arithmetic_op(inst[0])
+            elif cmd == 'VM_COMP':
+                hackgenerator.convert_comparison(inst[0])
+            elif cmd == 'VM_LABEL':
+                hackgenerator.convert_label (inst[1])
+            elif cmd == 'VM_GOTO' :
+                hackgenerator.convert_goto(inst[1])
+            elif cmd == 'VM_IF_GOTO' :
+                hackgenerator.convert_ifgoto(inst[1])
+            elif cmd == 'VM_FUNCTION':
+                hackgenerator.convert_function(inst[1], inst[2])
+            elif cmd == 'VM_RETURN' :
+                hackgenerator.convert_return()
+            elif cmd == 'VM_CALL':
+                hackgenerator.convert_call(inst[1], inst[2])
+        vmparser.close()
+    
+    hackgenerator.close()
 
 
 
